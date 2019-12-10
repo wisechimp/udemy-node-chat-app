@@ -2,6 +2,7 @@ const path = require('path')
 const http = require('http')
 const express = require('express')
 const socketio = require('socket.io')
+const Filter = require('bad-words')
 
 const app = express()
 const server = http.createServer(app)
@@ -17,14 +18,24 @@ let welcomeMessage = 'Welcome!'
 io.on('connection', (socket) => {
   console.log('New WebSocket connection')
 
-  // This sends to this original client
   socket.emit('message', welcomeMessage)
-  // This sends to every client bar the original one
+
   socket.broadcast.emit('message', 'A new user has joined')
 
-  socket.on('sendMessage', (message) => {
-    // This sends to every connected client
+  socket.on('sendMessage', (message, callback) => {
+    const filter = new Filter()
+
+    if (filter.isProfane(message)) {
+      return callback('Fing error!')
+    }
+
     io.emit('message', message)
+    callback()
+  })
+
+  socket.on('userLocation', (coords, callback) => {
+    socket.broadcast.emit('message', `https://google.com/maps?q=${coords.latitude},${coords.longitude}`)
+    callback()
   })
 
   socket.on('disconnect', () => {
