@@ -34,7 +34,7 @@ io.on('connection', (socket) => {
   })
 
   socket.on('userLocation', (coords, callback) => {
-    socket.broadcast.emit('message', `https://google.com/maps?q=${coords.latitude},${coords.longitude}`)
+    socket.broadcast.emit('locationLink', `https://google.com/maps?q=${coords.latitude},${coords.longitude}`)
     callback()
   })
 
