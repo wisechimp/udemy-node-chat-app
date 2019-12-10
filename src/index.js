@@ -17,10 +17,18 @@ let welcomeMessage = 'Welcome!'
 io.on('connection', (socket) => {
   console.log('New WebSocket connection')
 
+  // This sends to this original client
   socket.emit('message', welcomeMessage)
+  // This sends to every client bar the original one
+  socket.broadcast.emit('message', 'A new user has joined')
 
   socket.on('sendMessage', (message) => {
+    // This sends to every connected client
     io.emit('message', message)
+  })
+
+  socket.on('disconnect', () => {
+    io.emit('message', 'A user has left')
   })
 })
 
