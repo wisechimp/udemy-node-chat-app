@@ -43,6 +43,7 @@ io.on('connection', (socket) => {
     // Notifying everyone else in the room that someone has joined
     socket.emit('message', generateMessage('Admin', welcomeMessage))
     socket.broadcast.to(room).emit('message', generateMessage('Admin', `${username} has joined ${room}`))
+    io.to(room).emit('roomData', { room, users: getUsersInRoom(room) })
 
     callback()
   })
@@ -78,6 +79,7 @@ io.on('connection', (socket) => {
     if (user) {
       const { username, room } = user
       io.to(room).emit('message', generateMessage('Admin', `${username} has left the building!`))
+      io.to(room).emit('roomData', { room, users: getUsersInRoom(room) })
     }
 
   })
