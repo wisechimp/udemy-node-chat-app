@@ -41,7 +41,7 @@ io.on('connection', (socket) => {
     socket.join(room)
 
     // Notifying everyone else in the room that someone has joined
-    socket.emit('message', generateMessage(welcomeMessage))
+    socket.emit('message', generateMessage('Admin', welcomeMessage))
     socket.broadcast.to(room).emit('message', generateMessage(`${username} has joined ${room}`))
 
     callback()
@@ -49,6 +49,8 @@ io.on('connection', (socket) => {
 
   // When someone sends a message
   socket.on('sendMessage', (message, callback) => {
+    const { username, room } = getUser(socket.id)
+
     const filter = new Filter()
 
     // A filter to prevent naughty words
@@ -57,13 +59,15 @@ io.on('connection', (socket) => {
     }
 
     // Sending the message to everyone is the words are OK
-    io.to('With a View').emit('message', generateMessage(message))
+    io.to(room).emit('message', generateMessage(username, message))
     callback()
   })
 
   // Sharing the user's location link
   socket.on('userLocation', (coords, callback) => {
-    socket.broadcast.emit('locationLink', generateLocationLink(`https://google.com/maps?q=${coords.latitude},${coords.longitude}`))
+    const { username, room } = getUser(socket.id)
+
+    socket.broadcast.to(room).emit('locationLink', generateLocationLink(username, `https://google.com/maps?q=${coords.latitude},${coords.longitude}`))
     callback()
   })
 
