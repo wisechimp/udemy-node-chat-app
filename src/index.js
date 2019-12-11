@@ -7,6 +7,11 @@ const Filter = require('bad-words')
 const {
   generateMessage,
   generateLocationLink } = require('./utils/messages')
+const {
+  addUser,
+  removeUser,
+  getUser,
+  getUsersInRoom } = require('./utils/users')
 
 const app = express()
 const server = http.createServer(app)
@@ -24,12 +29,22 @@ io.on('connection', (socket) => {
   console.log('New WebSocket connection')
 
   // When someone joins a room
-  socket.on('join', ({ username, room }) => {
+  socket.on('join', (options, callback) => {
+    const { error, user } = addUser({ id: socket.id, ...options })
+
+    if (error) {
+      return callback(error)
+    }
+
+    const { username, room } = user
+
     socket.join(room)
 
     // Notifying everyone else in the room that someone has joined
     socket.emit('message', generateMessage(welcomeMessage))
     socket.broadcast.to(room).emit('message', generateMessage(`${username} has joined ${room}`))
+
+    callback()
   })
 
   // When someone sends a message
@@ -54,7 +69,13 @@ io.on('connection', (socket) => {
 
   // Disconnecting from the chat
   socket.on('disconnect', () => {
-    io.emit('message', generateMessage('A user has left'))
+    const user = removeUser(socket.id)
+
+    if (user) {
+      const { username, room } = user
+      io.to(room).emit('message', generateMessage(`${username} has left the building!`))
+    }
+
   })
 })
 
